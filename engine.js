@@ -2,8 +2,8 @@ function Random(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-canvas_id
-canvas = document.getElementById("game_canvas");
+canvasid = "game_canvas"
+canvas = document.getElementById(canvas_id);
 ctx = canvas.getContext("2d");
 
 /*
@@ -134,7 +134,7 @@ function eCutter(sprite,x,y,w,h) {
 
 
 // SPRITE WORK {
-function eSpriteList(src, slw, slh, w, h) {
+function eSpriteList(src, w, h) {
 	this.sprite_list = new eImage(src)
 	this.w = w // sprite
 	this.h = h // sprite
@@ -143,9 +143,12 @@ function eSpriteList(src, slw, slh, w, h) {
 	this.slh = slh // sprite list
 	this.sprites = []
 	
-	for(var i = 0; i*h < this.slh; i++) {
-		for(var j = 0; j*w < this.slw; j++) {
-			this.sprites.push({'x':j*w, 'y': i*h});
+	var sl = this.sprite_list
+	sl.onload = function() {
+		for(var i = 0; i*h < sl.width; i++) {
+			for(var j = 0; j*w < this.sl.height; j++) {
+				this.sprites.push({'x':j*w, 'y': i*h});
+			}
 		}
 	}
 
