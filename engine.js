@@ -2,7 +2,7 @@ function Random(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-canvasid = "game_canvas"
+canvas_id = "game_canvas"
 canvas = document.getElementById(canvas_id);
 ctx = canvas.getContext("2d");
 
@@ -138,9 +138,7 @@ function eSpriteList(src, w, h) {
 	this.sprite_list = new eImage(src)
 	this.w = w // sprite
 	this.h = h // sprite
-
-	this.slw = slw // sprite list
-	this.slh = slh // sprite list
+	
 	this.sprites = []
 	
 	var sl = this.sprite_list
