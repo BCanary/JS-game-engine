@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Шахматы</title>
+</head>
+<body>
+	<canvas id="game_canvas"></canvas>
+	<script type="text/javascript" src="engine/engine.js"></script>
+	<script type="text/javascript">
+		
+		eResizeCanvas();
+		var spr_w = 119, spr_h = 128;
+		chess_sprites = new eSpriteList("imgs/chess.png",spr_w,spr_h)
+		desk = new eImage("imgs/board1.jpg");
+		var color_key = 0;
+
+		bml = new eKey(37);
+		bmr = new eKey(39);
+
+		btn_color = new eButton(800,100,100,50, {
+			'text': "Change color",
+			'command': function(btn) {
+				if(btn.pressed) {
+					color_key++;
+					if(color_key > colors_keys.length-2) {
+						color_key = 0
+					}
+					bottom_color = colors[colors_keys[color_key]];
+					let ck = color_key + 1
+					top_color = colors[colors_keys[ck]]; 
+					board.forEach( function(e, i) {
+						if(e.color == 0) {
+							e.team = 0
+						} else if (e.color == 1) {
+							e.team = 1
+						}
+
+						if(e.team == 0) {
+							e.color = top_color
+						} else if(e.team == 1) {
+							e.color = bottom_color
+						}
+					});
+				}
+			}
+		}) 
+		btn_reset = new eButton(800,300,100,50, {
+			'text': "Reset",
+			'command': function(btn) {
+				reset();
+			},
+			'btn_color': rgba(255,0,0,1),
+			'btn_press_color': rgba(255,100,100,1)
+		}) 
+		btn_phys = new eButton(800,200,100,50, {
+			'text': "phisics",
+			'command': function(btn) {
+				if(btn.pressed && phisics) {
+					btn.btn_color = rgba(255,0,0,1);
+					btn.btn_press_color = rgba(255,100,100,1);
+					phisics = false
+				} else if(btn.pressed && !phisics) {
+					btn.btn_color = rgba(0,255,0,1);
+					btn.btn_press_color = rgba(100,255,100,1);
+					phisics = true
+				}
+			},
+			'btn_color': rgba(255,0,0,1),
+			'btn_press_color': rgba(255,0,0,1)
+		}) 
+
+		chess = {
+			"pawn": 0,
+			"knight": 1,
+			"bishop": 2,
+			"rook": 3,
+			"queen": 4,
+			"king": 5
+		}
+
+		colors = {
+			"black": 0,
+			"white": 1,
+			"dark_gray": 2,
+			"lighte_gray": 3,
+			"pink": 4,
+			"red": 5,
+			"orange": 6,
+			"yellow": 7,
+			"green": 8,
+			"dark_blue": 9,
+			"light_blue": 10,
+			"purple": 11
+		}
+		colors_keys = Object.keys(colors);
+
+
+		board = []
+
+
+		
+		function reset() {
+			board = []
+			bottom_color = colors.white
+			top_color = colors.black
+			color_key = 0
+			// PAWNS //
+			for(var i = 0; i < 8; i++) {
+				board.push({
+					"piece": chess.pawn,
+					"color": top_color,
+					"x": i*70+110,
+					"y": 170,
+					"hitbox_w": 40,
+					"hitbox_h": 60
+				})
+			}
+
+			for(var i = 0; i < 8; i++) {
+				board.push({
+					"piece": chess.pawn,
+					"color": bottom_color,
+					"x": i*70+110,
+					"y": 170*3+10,
+					"hitbox_w": 40,
+					"hitbox_h": 60
+				})
+			}
+			// PAWNS //
+
+			// KNIGHTS //
+			board.push({
+					"piece": chess.knight,
+					"color": top_color,
+					"x": 160,
+					"y": 95,
+					"hitbox_w": 50,
+					"hitbox_h": 60
+				})
+			board.push({
+					"piece": chess.knight,
+					"color": top_color,
+					"x": 530,
+					"y": 95,
+					"hitbox_w": 50,
+					"hitbox_h": 60
+				})
+			board.push({
+					"piece": chess.knight,
+					"color": bottom_color,
+					"x": 160,
+					"y": 591,
+					"hitbox_w": 50,
+					"hitbox_h": 60
+				})
+			board.push({
+					"piece": chess.knight,
+					"color": bottom_color,
+					"x": 530,
+					"y": 591,
+					"hitbox_w": 50,
+					"hitbox_h": 60
+				})
+			// BISHOP //
+			board.push({
+					"piece": chess.bishop,
+					"color": top_color,
+					"x": 230,
+					"y": 95,
+					"hitbox_w": 60,
+					"hitbox_h": 60
+				})
+			board.push({
+					"piece": chess.bishop,
+					"color": top_color,
+					"x": 450,
+					"y": 95,
+					"hitbox_w": 60,
+					"hitbox_h": 60
+				})
+			board.push({
+					"piece": chess.bishop,
+					"color": bottom_color,
+					"x": 230,
+					"y": 591,
+					"hitbox_w": 60,
+					"hitbox_h": 60
+				})
+			board.push({
+					"piece": chess.bishop,
+					"color": bottom_color,
+					"x": 450,
+					"y": 591,
+					"hitbox_w": 60,
+					"hitbox_h": 60
+				})
+			// ROOK //
+			board.push({
+					"piece": chess.rook,
+					"color": top_color,
+					"x": 85,
+					"y": 95,
+					"hitbox_w": 60,
+					"hitbox_h": 60
+				})
+			board.push({
+					"piece": chess.rook,
+					"color": top_color,
+					"x": 580,
+					"y": 95,
+					"hitbox_w": 60,
+					"hitbox_h": 60
+				})
+			board.push({
+					"piece": chess.rook,
+					"color": bottom_color,
+					"x": 85,
+					"y": 591,
+					"hitbox_w": 60,
+					"hitbox_h": 60
+				})
+			board.push({
+					"piece": chess.rook,
+					"color": bottom_color,
+					"x": 580,
+					"y": 591,
+					"hitbox_w": 65,
+					"hitbox_h": 60
+				})
+			// QUEEN //
+			board.push({
+					"piece": chess.queen,
+					"color": top_color,
+					"x": 300,
+					"y": 95,
+					"hitbox_w": 65,
+					"hitbox_h": 60,
+					'hitbox_offsset': 10,
+				})
+			board.push({
+					"piece": chess.queen,
+					"color": bottom_color,
+					"x": 370,
+					"y": 591,
+					"hitbox_w": 60,
+					"hitbox_h": 60,
+					'hitbox_offsset': 10,
+				})
+			// KING //
+			board.push({
+					"piece": chess.king,
+					"color": top_color,
+					"x": 380,
+					"y": 95,
+					"hitbox_w": 55,
+					"hitbox_h": 60,
+					'hitbox_offsset': 20,
+				})
+			board.push({
+					"piece": chess.king,
+					"color": bottom_color,
+					"x": 310,
+					"y": 591,
+					"hitbox_w": 55,
+					"hitbox_h": 60,
+					'hitbox_offsset': 20,
+				})
+			board.forEach( function(element, index) {
+				element.vx = 0;
+				element.vy = 0;
+				element.ax = 0;
+				element.ay = 0;
+				element.prev_x = element.x;
+				element.prev_y = element.y;
+
+				if(element.hitbox_offsset == undefined) {
+						element.hitbox_offsset = 0;
+					}
+			});
+		}
+		reset()
+		
+		taken = false
+		takeOffsetX = 0
+		takeOffsetY = 0
+		target = board[0]
+		collision = false
+		SX = 0
+		SY = 0; SDS = 0
+		end = true
+		phisics = false
+		function takedrop(dt) {
+			for(var i = board.length-1; i >= 0; i--) {
+
+				index = i
+				e = board[i]
+
+				if(phisics) {
+				e.vx = e.ax*10
+				e.vy = e.ay*10
+
+				e.x += e.vx
+				e.y += e.vy
+					}
+				
+
+				if(mouseX > e.x && mouseY > e.y && mouseX < e.x + e.hitbox_w && mouseY < e.y + e.hitbox_h && mousedown && !taken) {
+					target = e
+					taken = true
+					takeOffsetX = mouseX - e.x
+					takeOffsetY = mouseY - e.y
+
+					var this_element = e
+					var last_element = board[board.length-1]
+
+					board.splice(index, 1)
+					board.push(this_element);
+				}
+				for(var j = board.length-1; j >= 0; j--) {
+						e2 = board[j]
+						if(phisics && e != e2 && eCollision(e.x,e.y,e.hitbox_w,e.hitbox_h,e2.x,e2.y,e2.hitbox_w,e2.hitbox_h)){
+								//e.color = colors.red
+								collision = true
+									e2.ax = e.ax
+									e2.ay = e.ay
+
+									e.ax = -e.ax
+									e.ay = -e.ay
+						} else {
+							collision = false
+						}
+					}
+				if(mousedown && taken) {
+					target.x = mouseX-takeOffsetX
+					target.y = mouseY-takeOffsetY
+
+					//MATH    v = S/t
+					
+					if(end) {
+						end = false
+						setTimeout(function() {
+							SX = target.x - target.prev_x
+							SY = target.y - target.prev_y
+
+							target.prev_x = target.x
+							target.prev_y = target.y
+
+							end = true
+						},10);
+					}
+
+					vx = SX/10; //VX = SX px per 0.001 second
+					target.ax = vx/10;
+					vy = SY/10;
+					target.ay = vy/10;
+				} else {
+					taken = false
+				}
+				if(debug) {
+						text = target.x + "," + target.y 
+						ctx.fillText(text,734,62,100,100);
+						SDS = SX
+						text = SDS
+						ctx.fillText(text,734,400,100,100);
+					}
+			}
+
+
+		}
+		
+
+
+		debug = false
+		function loop(dt) {
+			
+			if(bml.press()) {
+				target.ax = 10
+			}
+			eClearCanvas();
+			desk.drawSize(0,0,750,750)
+			board.forEach(function(e, i){
+				if(debug) {
+					ctx.save()
+					ctx.fillStyle = "rgba(100,100,100,0.3)"
+					ctx.fillRect(e.x,e.y,e.hitbox_w,e.hitbox_h);
+					ctx.restore()
+				}
+				chess_sprites.drawSprite(e.x-e.hitbox_offsset,e.y,spr_w/1.5,spr_h/1.5,e.piece+(e.color*6));
+			});
+			btn_color.draw()
+			btn_reset.draw()
+			btn_phys.draw()
+			takedrop(dt)
+		}
+
+		game = new eGameLoop(loop,60);
+	</script>
+</body>
+</html>
