@@ -98,6 +98,7 @@ function eImage(src) {
 	var w = 0;
 	var h = 0;
 
+
 	this.draw = function(x,y) {
 		ctx.drawImage(this.image, x, y);
 	}
@@ -138,22 +139,33 @@ function eSpriteList(src, w, h) {
 	this.sprite_list = new eImage(src)
 	this.w = w // sprite
 	this.h = h // sprite
-	
+
 	this.sprites = []
+
+
+	this.loaded = false
 	
 	var sl = this.sprite_list
-	sl.onload = function() {
-		for(var i = 0; i*h < sl.width; i++) {
-			for(var j = 0; j*w < this.sl.height; j++) {
-				this.sprites.push({'x':j*w, 'y': i*h});
+	var sp = this.sprites
+	var w = this.w
+	var h = this.h
+
+	var t = this
+
+	sl.image.onload = function() {
+		for(var i = 0; i*h < sl.image.height; i++) {
+			for(var j = 0; j*h < sl.image.width; j++) {
+				sp.push({'x':j*w, 'y': i*h});
 			}
 		}
+		t.loaded = true
 	}
 
-	this.drawSprite = function(x,y,i) {
-			s = this.sprites
-			console.log()
-			this.sprite_list.drawCut(s[i].x,s[i].y,this.w,this.h,x,y,this.w,this.h);
+	this.drawSprite = function(x,y,w,h,i) {
+		s = this.sprites
+		if(this.loaded && s != undefined) {
+			this.sprite_list.drawCut(s[i].x,s[i].y,this.w,this.h,x,y,w,h);
+		}
 	}
 }
 
@@ -188,11 +200,11 @@ function eAnimation(sprite_list, animation, speed) {
 		}
 	}
 
-	this.play = function(x,y,repeat_count) {
+	this.play = function(x,y,w,h,repeat_count) {
 		this.x = x
 		this.y = y
 
-		this.sprite_list.drawSprite(this.x,this.y,this.animation[this.playing_now])
+		this.sprite_list.drawSprite(this.x,this.y,this.w,this.h,this.animation[this.playing_now])
 		if(!this.playing) {
 			this.repeat_count = repeat_count
 			if(repeat_count == -1) {
@@ -244,6 +256,7 @@ function eGameLoop(main_func, fps) { // func - функция для повто�
 			}, 
 			this.fps,this);
 	}
+	this.reboot()
 }
 
 
@@ -271,7 +284,112 @@ addEventListener('keydown', function(e) {
 addEventListener('keyup', function(e) {
 	keys_down.splice(e.keyCode);
 });
+
+mousedown = false
+addEventListener('mousedown', function(e) {
+	mousedown = true
+});
+addEventListener('mouseup', function(e) {
+	mousedown = false
+});
+function eKey(code) {
+	this.code = code;
+	this.pressed = false
+
+	this.press = function() {
+		if(this.code in keys_down && !this.pressed) {
+			this.pressed = true
+			return true
+		} else if (!(this.code in keys_down)) {
+			this.pressed = false
+			return false
+		}
+	}
+
+	this.hold = function() {
+		if(this.code in keys_down) {
+			this.pressed = true
+			return true
+		} else {
+			this.pressed = false
+			return false
+		}
+	}
+}
 //---------
 //setInterval(function(e){console.log(keys_down)}, 1000)
 // KEYS AND MOUSE END
 
+// VIRTUAL THINGS
+function rgba(r,g,b,a) {
+	return "rgba(" + r + "," + g + "," + b + "," + a + ")";
+}
+function eButton(x,y,w,h,args) {
+	this.x = x
+	this.y = y
+	this.w = w
+	this.h = h
+	// STANDART ARGS
+	
+	this.text = "Press";
+	this.font_size = this.w/8;
+	this.font = this.font_size + "px Arial";
+	this.pressed = false;
+	this.btn_color = rgba(0,0,255,1);
+	this.text_color = rgba(255,255,255,1);
+	this.btn_press_color = rgba(100,100,255,1)
+	this.text_press_color = rgba(255,255,255,1);
+	this.command = function(inst) {
+		console.log("\"" + inst.text + "\" button is pressed");
+	};
+
+	// Custom args
+	for(var arg in args) {
+		this[arg] = args[arg];
+	}
+
+	this.on_state = function() {
+		ctx.save();
+		ctx.fillStyle = this.btn_color;
+		ctx.fillRect(this.x,this.y,this.w,this.h);
+		ctx.fillStyle = this.text_color;
+		ctx.font = this.font
+		ctx.fillText(this.text, this.x+this.w/2-(this.text.length*this.font_size/4), this.y+this.h/2);
+		ctx.restore();
+	}
+	this.on_release = function() {
+		this.on_state();
+	}
+	this.on_press = function() {
+		ctx.save();
+		ctx.fillStyle = this.btn_press_color;
+		ctx.fillRect(this.x,this.y,this.w,this.h);
+		ctx.fillStyle = this.text_press_color;
+		ctx.font = this.font
+		ctx.fillText(this.text, this.x+this.w/2-(this.text.length*this.font_size/4), this.y+this.h/2);
+		ctx.restore();
+	}
+	this.draw = function() {
+		if(mousedown && eCollision(mouseX, mouseY, 0, 0, this.x, this.y, this.w, this.h)) {
+			if(!this.hold) {
+				this.pressed = true
+			} else this.pressed = false	
+			this.hold = true		
+			this.on_press();
+			this.command(this);
+		} else {
+			if(this.pressed) {
+				this.on_release();
+			}
+			this.on_state();
+			this.hold = false
+		}
+	}
+}
+
+// PHYSICS // AWWW SHIITT!!!
+function eCollision(x,y,w,h,x2,y2,w2,h2) {
+		if(x + w > x2 && y + h > y2 && x < x2 + w2 && y < y2 + h2) {
+			return true
+		} else return false
+}
